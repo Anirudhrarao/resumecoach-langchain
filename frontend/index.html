@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ResumeCoach</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f4f5f7;
+      color: #1a1a2e;
+      min-height: 100vh;
+    }
+
+    /* ── Layout ── */
+    .app { display: grid; grid-template-columns: 380px 1fr; height: 100vh; }
+
+    /* ── Left panel ── */
+    .left-panel {
+      background: #fff;
+      border-right: 1px solid #e2e4e9;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid #e2e4e9;
+    }
+
+    .panel-header h1 { font-size: 20px; font-weight: 600; color: #1a1a2e; }
+    .panel-header p  { font-size: 13px; color: #6b7280; margin-top: 4px; }
+
+    .panel-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #374151;
+      margin-bottom: 6px;
+      margin-top: 16px;
+    }
+
+    label:first-of-type { margin-top: 0; }
+
+    textarea {
+      width: 100%;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 13px;
+      font-family: inherit;
+      resize: vertical;
+      color: #1a1a2e;
+      transition: border-color 0.15s;
+      background: #fafafa;
+    }
+
+    textarea:focus { outline: none; border-color: #6366f1; background: #fff; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-primary   { background: #6366f1; color: #fff; width: 100%; justify-content: center; margin-top: 16px; }
+    .btn-secondary { background: #f3f4f6; color: #374151; }
+    .btn-danger    { background: #fee2e2; color: #991b1b; }
+
+    /* ── Analysis results card ── */
+    .results-card {
+      margin-top: 20px;
+      border: 1px solid #e2e4e9;
+      border-radius: 10px;
+      overflow: hidden;
+      display: none;
+    }
+
+    .results-card.visible { display: block; }
+
+    .results-header {
+      background: #6366f1;
+      color: #fff;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .score-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid #e2e4e9;
+    }
+
+    .score-badge {
+      font-size: 22px;
+      font-weight: 700;
+      color: #6366f1;
+      min-width: 52px;
+    }
+
+    .score-bar-wrap { flex: 1; background: #f3f4f6; border-radius: 4px; height: 8px; }
+    .score-bar      { height: 8px; border-radius: 4px; background: #6366f1; transition: width 0.6s; }
+
+    .skill-section { padding: 12px 16px; border-bottom: 1px solid #f0f0f0; }
+    .skill-section h4 { font-size: 12px; font-weight: 600; text-transform: uppercase; color: #9ca3af; margin-bottom: 8px; }
+
+    .skill-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+
+    .pill {
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+
+    .pill-green  { background: #d1fae5; color: #065f46; }
+    .pill-red    { background: #fee2e2; color: #991b1b; }
+
+    .recs-section { padding: 12px 16px; }
+    .recs-section h4 { font-size: 12px; font-weight: 600; text-transform: uppercase; color: #9ca3af; margin-bottom: 8px; }
+    .recs-section li { font-size: 13px; color: #374151; margin-bottom: 6px; padding-left: 4px; }
+
+    /* ── Right panel ── */
+    .right-panel {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .chat-header {
+      padding: 16px 24px;
+      background: #fff;
+      border-bottom: 1px solid #e2e4e9;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .chat-header h2 { font-size: 16px; font-weight: 600; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block; margin-right: 6px; }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .message {
+      max-width: 75%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .message.user      { background: #6366f1; color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+    .message.assistant { background: #fff; color: #1a1a2e; align-self: flex-start; border: 1px solid #e2e4e9; border-bottom-left-radius: 4px; }
+    .message.system    { background: #fef3c7; color: #92400e; align-self: center; font-size: 12px; border-radius: 6px; padding: 6px 12px; }
+
+    .typing-indicator { color: #9ca3af; font-size: 13px; font-style: italic; align-self: flex-start; }
+
+    /* ── Approval card ── */
+    .approval-card {
+      background: #fff;
+      border: 1px solid #e2e4e9;
+      border-radius: 10px;
+      padding: 16px;
+      align-self: flex-start;
+      max-width: 75%;
+    }
+
+    .approval-card h4  { font-size: 13px; font-weight: 600; margin-bottom: 8px; color: #374151; }
+    .approval-card p   { font-size: 13px; color: #4b5563; line-height: 1.5; margin-bottom: 12px; background: #f9fafb; padding: 10px; border-radius: 6px; }
+    .approval-buttons  { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* ── Chat input ── */
+    .chat-input-area {
+      padding: 16px 24px;
+      background: #fff;
+      border-top: 1px solid #e2e4e9;
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    .chat-input-area textarea {
+      flex: 1;
+      min-height: 44px;
+      max-height: 120px;
+      border-radius: 10px;
+      resize: none;
+    }
+
+    .send-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: #6366f1;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: opacity 0.15s;
+    }
+
+    .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .send-btn svg { width: 18px; height: 18px; fill: #fff; }
+
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #9ca3af;
+      gap: 8px;
+    }
+
+    .empty-state p { font-size: 14px; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ── LEFT PANEL ─────────────────────────────── -->
+  <div class="left-panel">
+    <div class="panel-header">
+      <h1>ResumeCoach</h1>
+      <p>AI-powered resume analyzer &amp; career coach</p>
+    </div>
+
+    <div class="panel-body">
+      <label for="resume-input">Your resume</label>
+      <textarea id="resume-input" rows="7" placeholder="Paste your resume text here..."></textarea>
+
+      <label for="jd-input">Job description</label>
+      <textarea id="jd-input" rows="7" placeholder="Paste the job description here..."></textarea>
+
+      <button class="btn btn-primary" id="analyze-btn" onclick="runAnalysis()">
+        Analyze resume
+      </button>
+
+      <!-- Results card — hidden until analysis runs -->
+      <div class="results-card" id="results-card">
+        <div class="results-header">Analysis results</div>
+
+        <div class="score-row">
+          <div class="score-badge" id="score-badge">0%</div>
+          <div class="score-bar-wrap">
+            <div class="score-bar" id="score-bar" style="width:0%"></div>
+          </div>
+        </div>
+
+        <div class="skill-section">
+          <h4>Matched skills</h4>
+          <div class="skill-pills" id="matched-pills"></div>
+        </div>
+
+        <div class="skill-section">
+          <h4>Missing skills</h4>
+          <div class="skill-pills" id="missing-pills"></div>
+        </div>
+
+        <div class="recs-section">
+          <h4>Top recommendations</h4>
+          <ul id="recs-list"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RIGHT PANEL ────────────────────────────── -->
+  <div class="right-panel">
+    <div class="chat-header">
+      <h2><span class="status-dot"></span>ResumeCoach chat</h2>
+      <button class="btn btn-secondary" onclick="newSession()">New session</button>
+    </div>
+
+    <div class="chat-messages" id="chat-messages">
+      <div class="empty-state" id="empty-state">
+        <p>Paste your resume and job description, then click Analyze to begin.</p>
+      </div>
+    </div>
+
+    <div class="chat-input-area">
+      <textarea
+        id="chat-input"
+        placeholder="Ask the coach anything..."
+        rows="1"
+        onkeydown="handleKey(event)"
+      ></textarea>
+      <button class="send-btn" id="send-btn" onclick="sendMessage()" disabled>
+        <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const API = "http://127.0.0.1:8000/api";
+  let threadId = null;
+
+  // ── Session management ────────────────────────────────
+  async function initSession() {
+    const res  = await fetch(`${API}/session`, { method: "POST" });
+    const data = await res.json();
+    threadId   = data.thread_id;
+    console.log("Session started:", threadId);
+  }
+
+  async function newSession() {
+    threadId = null;
+    document.getElementById("chat-messages").innerHTML = `
+      <div class="empty-state" id="empty-state">
+        <p>Paste your resume and job description, then click Analyze to begin.</p>
+      </div>`;
+    document.getElementById("results-card").classList.remove("visible");
+    document.getElementById("send-btn").disabled = true;
+    await initSession();
+    addMessage("system", "New session started. Paste your resume and job description to begin.");
+  }
+
+  // ── Analysis ──────────────────────────────────────────
+  async function runAnalysis() {
+    const resumeText = document.getElementById("resume-input").value.trim();
+    const jdText     = document.getElementById("jd-input").value.trim();
+
+    if (!resumeText || !jdText) {
+      alert("Please paste both your resume and the job description.");
+      return;
+    }
+
+    const btn = document.getElementById("analyze-btn");
+    btn.disabled    = true;
+    btn.textContent = "Analyzing...";
+
+    try {
+      if (!threadId) await initSession();
+
+      const res  = await fetch(`${API}/analyze`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resume_text: resumeText, job_description: jdText })
+      });
+
+      const data = await res.json();
+      renderAnalysis(data);
+
+      // Enable chat after analysis
+      document.getElementById("send-btn").disabled = false;
+      document.getElementById("empty-state")?.remove();
+
+      // Auto-send a coaching message to start the conversation
+      await sendToAgent(
+        `I have analyzed my resume. My match score is ${data.match_score}%. ` +
+        `I am missing: ${data.missing_skills.join(", ")}. Where should I start?`
+      );
+
+    } catch (err) {
+      alert("Analysis failed: " + err.message);
+    } finally {
+      btn.disabled    = false;
+      btn.textContent = "Analyze resume";
+    }
+  }
+
+  function renderAnalysis(data) {
+    document.getElementById("score-badge").textContent = data.match_score + "%";
+    document.getElementById("score-bar").style.width   = data.match_score + "%";
+
+    const matchedPills = document.getElementById("matched-pills");
+    const missingPills = document.getElementById("missing-pills");
+    const recsList     = document.getElementById("recs-list");
+
+    matchedPills.innerHTML = data.matched_skills
+      .map(s => `<span class="pill pill-green">${s}</span>`).join("");
+
+    missingPills.innerHTML = data.missing_skills
+      .map(s => `<span class="pill pill-red">${s}</span>`).join("");
+
+    recsList.innerHTML = data.top_recommendations
+      .map(r => `<li>${r}</li>`).join("");
+
+    document.getElementById("results-card").classList.add("visible");
+  }
+
+  // ── Chat ──────────────────────────────────────────────
+  function handleKey(e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  }
+
+  async function sendMessage() {
+    const input = document.getElementById("chat-input");
+    const text  = input.value.trim();
+    if (!text || !threadId) return;
+
+    input.value = "";
+    await sendToAgent(text);
+  }
+
+  async function sendToAgent(text) {
+  addMessage("user", text);
+  document.getElementById("send-btn").disabled = true;
+
+  const indicator = addMessage("typing", "Coach is thinking...");
+
+  try {
+    const res = await fetch(`${API}/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text, thread_id: threadId })
+    });
+
+    const reader  = res.body.getReader();
+    const decoder = new TextDecoder();
+    let   buffer  = "";
+    let   msgEl   = null;
+    let   done    = false;
+
+    indicator.remove();
+
+    while (!done) {
+      const { value, done: streamDone } = await reader.read();
+      if (streamDone) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const parts = buffer.split("\n\n");
+      buffer = parts.pop();
+
+      for (const part of parts) {
+        const line = part.trim();
+        if (!line.startsWith("data: ")) continue;
+
+        const token = line.slice(6);
+
+        if (token === "[DONE]") { done = true; break; }
+        if (token.startsWith("[ERROR]")) {
+          addMessage("system", token.replace("[ERROR] ", ""));
+          done = true;
+          break;
+        }
+
+        if (!msgEl) msgEl = addMessage("assistant", "");
+        msgEl.textContent += token.replace(/<<NEWLINE>>/g, "\n");
+        scrollToBottom();
+      }
+    }
+
+  } catch (err) {
+    indicator.remove();
+    addMessage("system", "Connection error: " + err.message);
+  } finally {
+    document.getElementById("send-btn").disabled = false;
+    scrollToBottom();
+  }
+}
+
+  // ── DOM helpers ───────────────────────────────────────
+  function addMessage(role, text) {
+    const container = document.getElementById("chat-messages");
+    const el        = document.createElement("div");
+
+    if (role === "typing") {
+      el.className   = "typing-indicator";
+      el.textContent = text;
+    } else {
+      el.className   = `message ${role}`;
+      el.textContent = text;
+    }
+
+    container.appendChild(el);
+    scrollToBottom();
+    return el;
+  }
+
+  function scrollToBottom() {
+    const c = document.getElementById("chat-messages");
+    c.scrollTop = c.scrollHeight;
+  }
+
+  // ── Boot ──────────────────────────────────────────────
+  initSession();
+</script>
+</body>
+</html>
