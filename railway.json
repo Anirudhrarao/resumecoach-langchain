@@ -1,8 +1,9 @@
 {
   "build": {
-    "builder": "nixpacks"
+    "builder": "nixpacks",
+    "buildCommand": "pip install fastapi uvicorn langchain langchain-groq langchain-community langgraph tavily-python langchain-tavily pydantic python-dotenv python-multipart httpx"
   },
   "deploy": {
-    "startCommand": "pip install fastapi uvicorn[standard] langchain langchain-groq langchain-community langgraph tavily-python pydantic python-dotenv python-multipart httpx && uvicorn api.main:app --host 0.0.0.0 --port $PORT --workers 2"
+    "startCommand": "PYTHONPATH=src uvicorn api.main:app --host 0.0.0.0 --port $PORT"
   }
 }
