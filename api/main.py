@@ -39,3 +39,6 @@ def serve_frontend():
     return FileResponse(
         os.path.join(os.path.dirname(__file__), "..", "frontend", "index.html")
     )
+
+
+PORT = int(os.getenv("PORT", 8000))
